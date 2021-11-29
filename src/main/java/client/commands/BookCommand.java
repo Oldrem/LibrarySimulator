@@ -49,7 +49,8 @@ public class BookCommand {
     }
 
     public void printSearchResults(ResponseEntity<List<Book>> response){
-        System.out.println("Search result: ");
+        System.out.println("Search results: ");
+        System.out.println("-------------------------------------------");
         for(Book book : Objects.requireNonNull(response.getBody())) {
             System.out.println("Name: " + book.getName());
             System.out.println("Author: " + book.getAuthorName());
@@ -59,7 +60,7 @@ public class BookCommand {
             }
             System.out.println("Publish date: " + book.getPublishDate());
             System.out.println("ISBN: " + book.getIsbn());
-            System.out.println("===============================");
+            System.out.println("-------------------------------------------");
         }
     }
 }
