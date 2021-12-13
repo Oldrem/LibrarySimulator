@@ -16,7 +16,7 @@ public class BookService {
         this.libraryRepository = libraryRepository;
     }
 
-    public List<Book> findByKeywords(String keywords){
+    public List<Book> findByKeywords(String keywords, String publisherName){
         Set<Book> books = new HashSet<>();
         String[] keys = keywords.split("%20");
         for(String key: keys) {
@@ -26,16 +26,21 @@ public class BookService {
             books.forEach(book -> book.setAnnotation(null));
             books.addAll(libraryRepository.findByAnnotationContainingIgnoreCase(key));
         }
+        books.removeIf(p -> !p.getPublisherName().equals(publisherName));
         return new ArrayList<>(books);
     }
 
-    public List<Book> find(Boolean nameFlag, Boolean authorFlag, Boolean keyWordsFlag, String value) {
-        if (nameFlag) {
-            return libraryRepository.findByNameContainingIgnoreCase(value);
-        }
-        if (authorFlag) {
-            return libraryRepository.findByAuthorName(value);
-        }
-        return Collections.emptyList();
+    public List<Book> findByName(String name, String publisherName){
+        List<Book> books = new ArrayList<>();
+        books.addAll(libraryRepository.findByNameContainingIgnoreCase(name));
+        books.removeIf(p -> !p.getPublisherName().equals(publisherName));
+        return new ArrayList<>(books);
+    }
+
+    public List<Book> findByAuthor(String author, String publisherName){
+        List<Book> books = new ArrayList<>();
+        books.addAll(libraryRepository.findByAuthorName(author));
+        books.removeIf(p -> !p.getPublisherName().equals(publisherName));
+        return new ArrayList<>(books);
     }
 }

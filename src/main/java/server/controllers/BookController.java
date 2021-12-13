@@ -3,8 +3,10 @@ package server.controllers;
 import org.apache.tomcat.jni.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import server.model.Book;
+import server.model.User;
 import server.repositories.BookRepository;
 import server.services.BookService;
 
@@ -32,28 +34,21 @@ public class BookController
         return (Collection<Book>) bookRepository.findAll();
     }
 
-    @GetMapping("/books/{id}")
-    ResponseEntity<?> getBook(@PathVariable Long id) {
-        Optional<Book> book = bookRepository.findById(id);
-        return book.map(response -> ResponseEntity.ok().body(response))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-
     @GetMapping("/books/name")
-    public ResponseEntity<Iterable<Book>> getBookByName(@RequestParam(name = "name") String name){
-        List<Book> list = bookRepository.findByNameContainingIgnoreCase(name);
+    public ResponseEntity<Iterable<Book>> getBookByName(@RequestParam(name = "name") String name, @RequestParam (name = "login") String login){
+        List<Book> list = service.findByName(name, login);
         return new ResponseEntity<Iterable<Book>>(list, HttpStatus.OK);
     }
 
     @GetMapping("/books/author")
-    public ResponseEntity<Iterable<Book>> getBookByAuthor(@RequestParam(name = "author") String author){
-        List<Book> list = bookRepository.findByAuthorName(author);
+    public ResponseEntity<Iterable<Book>> getBookByAuthor(@RequestParam(name = "author") String author, @RequestParam (name = "login") String login){
+        List<Book> list = service.findByAuthor(author, login);
         return new ResponseEntity<Iterable<Book>>(list, HttpStatus.OK);
     }
 
     @GetMapping("/books/keywords")
-    public ResponseEntity<Iterable<Book>> getBookByKeywords(@RequestParam(name = "keywords") String keywords){
-        List<Book> list = service.findByKeywords(keywords);
+    public ResponseEntity<Iterable<Book>> getBookByKeywords(@RequestParam(name = "keywords") String keywords, @RequestParam (name = "login") String login){
+        List<Book> list = service.findByKeywords(keywords, login);
         return new ResponseEntity<Iterable<Book>>(list, HttpStatus.OK);
     }
 
@@ -63,7 +58,8 @@ public class BookController
                     @RequestParam(name = "genre") String genre,
                     @RequestParam(name = "date") String date,
                     @RequestParam(name = "annotation") String annotation,
-                    @RequestParam(name = "isbn") String isbn
+                    @RequestParam(name = "isbn") String isbn,
+                    @RequestParam(name = "publisher") String publisher
     ) {
         LocalDate parsedDate;
         try{
@@ -73,23 +69,17 @@ public class BookController
             System.out.println("Couldn't parse date");
             parsedDate = LocalDate.now();
         }
-        return bookRepository.save(new Book(name, author, genre,
-                parsedDate, annotation, isbn));
+        Book book = new Book(name, author, genre, parsedDate, annotation, isbn, publisher);
+        formatBookRequest(book);
+        return bookRepository.save(book);
     }
 
-    @PutMapping("/books/{id}")
-    ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book book)
-    {
-        if (!bookRepository.existsById(id))
-            throw new RuntimeException("Invalid BookId");
-        book.setBookId(id);
-        Book result = bookRepository.save(book);
-        return ResponseEntity.ok().body(result);
-    }
-
-    @DeleteMapping("/books/{id}")
-    public ResponseEntity<?> deleteBook(@PathVariable Long id) {
-        bookRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+    public void formatBookRequest(Book book) {
+        book.setName(book.getName().replaceAll("%20", " "));
+        book.setAuthorName(book.getAuthorName().replaceAll("%20", " "));
+        book.setGenre(book.getGenre().replaceAll("%20", " "));
+        book.setAnnotation(book.getAnnotation().replaceAll("%20", " "));
+        book.setIsbn(book.getIsbn().replaceAll("%20", " "));
+        book.setPublisherName(book.getPublisherName().replaceAll("%20", " "));
     }
 }

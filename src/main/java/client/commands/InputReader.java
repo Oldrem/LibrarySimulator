@@ -1,6 +1,7 @@
 package client.commands;
 
 import client.model.Book;
+import client.validation.BookValidator;
 
 import java.util.Scanner;
 
@@ -8,24 +9,87 @@ public class InputReader {
 
     private Scanner scanner;
     private BookCommand command;
+    private String login;
+    private String password;
+    private Boolean isAuthorized = false;
 
     public InputReader(){
         scanner = new Scanner(System.in);
         command = new BookCommand();
     }
 
+
+    public boolean readAuthorizationCommand(){
+        System.out.println("Please log in or register in order to use the application. \n" +
+                "Use command 'login' or 'register'");
+        System.out.print("> ");
+        String commandString = scanner.nextLine();
+        switch (commandString){
+            case "login":
+                readLoginInfo();
+                break;
+            case "register":
+                readRegistrationInfo();
+                break;
+            case "exit":
+                return false;
+            default:
+                System.out.println("Please only use 'login' or 'register' commands.");
+        }
+        return true;
+    }
+
+    public void readLoginInfo(){
+        System.out.println("Enter your user name:");
+        String login = scanner.nextLine();
+
+        System.out.println("Enter your password:");
+        String password = scanner.nextLine();
+
+        AuthorizationCommand authCommand = new AuthorizationCommand();
+        if (authCommand.loginUser(login, password)) {
+            System.out.println("You successfully logged in!");
+            this.login = login;
+            this.password = password;
+            isAuthorized = true;
+        }
+    }
+
+    public void readRegistrationInfo(){
+        System.out.println("Enter your user name:");
+        String login = scanner.nextLine();
+
+        System.out.println("Enter your password:");
+        String password = scanner.nextLine();
+
+        AuthorizationCommand authCommand = new AuthorizationCommand();
+        if (authCommand.registerUser(login, password)) {
+            System.out.println("Registered new user: " + login);
+            this.login = login;
+            this.password = password;
+            isAuthorized = true;
+        }
+    }
+
     public boolean readCommand(){
+        if (!isAuthorized)
+            return readAuthorizationCommand();
         System.out.print("> ");
         String commandString = scanner.nextLine();
         switch (commandString){
             case "add":
-                command.addBook(readBookProperties());
+                command.addBook(readBookProperties(), login, password);
                 break;
             case "find":
                 readSearchParams();
                 break;
             case "help":
                 printAvailableCommands();
+                break;
+            case "logout":
+                isAuthorized = false;
+                login = null;
+                password = null;
                 break;
             case "exit":
                 return false;
@@ -57,19 +121,19 @@ public class InputReader {
                 case 1:
                     System.out.println("Enter book's name: ");
                     String name = scanner.nextLine();
-                    command.findBookByParam("name", name);
+                    command.findBookByParam("name", name, login, password);
                     exitFlag = true;
                     break;
                 case 2:
                     System.out.println("Enter author's name: ");
                     String authorName = scanner.nextLine();
-                    command.findBookByParam("author", authorName);
+                    command.findBookByParam("author", authorName, login, password);
                     exitFlag = true;
                     break;
                 case 3:
                     System.out.println("Enter key words separated by space. Example: 'keyword1 keyword2 keyword3'.");
                     String keywords = scanner.nextLine();
-                    command.findBookByParam("keywords", keywords);
+                    command.findBookByParam("keywords", keywords, login, password);
                     exitFlag = true;
                     break;
                 case 4:
@@ -100,7 +164,10 @@ public class InputReader {
         System.out.println("Enter book's ISBN:");
         String isbn = scanner.nextLine();
 
-        return new Book(name, authorName, genre, publishDate, annotation, isbn);
+        BookValidator validator = new BookValidator();
+        Book book = new Book(name, authorName, genre, publishDate, annotation, isbn, login);
+        validator.validateBook(book);
+        return book;
     }
 
     public void printAvailableCommands(){

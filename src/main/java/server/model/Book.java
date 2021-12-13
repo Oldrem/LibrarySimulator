@@ -15,16 +15,18 @@ public class Book {
     private LocalDate publishDate;
     private String annotation;
     private String isbn;
+    private String publisherName;
 
     public Book(){}
 
-    public Book(String name, String authorName, String genre, LocalDate publishDate, String annotation, String isbn) {
+    public Book(String name, String authorName, String genre, LocalDate publishDate, String annotation, String isbn, String publisherName) {
         this.name = name;
         this.authorName = authorName;
         this.genre = genre;
         this.publishDate = publishDate;
         this.annotation = annotation;
         this.isbn = isbn;
+        this.publisherName = publisherName;
     }
 
     public long getBookId() {
@@ -81,5 +83,13 @@ public class Book {
 
     public void setIsbn(String isbn) {
         this.isbn = isbn;
+    }
+
+    public String getPublisherName() {
+        return publisherName;
+    }
+
+    public void setPublisherName(String publisherName) {
+        this.publisherName = publisherName;
     }
 }
